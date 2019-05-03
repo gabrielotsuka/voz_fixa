@@ -3,7 +3,7 @@ from datetime import date
 import math
 import json
 import sys
-sys.path.append("/home/otsuka/Documents/Projects/doing/agile/voz_fixa/sql_library")
+sys.path.append("/home/otsuka/doing/voz_fixa/sql_library")
 from sql_json import mySQL
 
 
@@ -26,15 +26,15 @@ def build_dict(station, base, actual, days):
 		pre = "Esgotado"
 	else:
 		aux = math.ceil(pre_pm)
-		pre = "Esgota em até {} meses.".format(aux)
+		pre = "Esgota em ate {} meses.".format(aux)
 	result = {
-		"Estação": station,
+		"Estacao": station,
 		"Regional": actual[station]["REGIONAL"],
 		"Localidade": actual[station]["LOCALIDADE"],
 		"Sigla": actual[station]["SIGLA"],
 		"Total": total,
 		"Ocupados": oc,
-		"Disponíveis": disp,
+		"Disponiveis": disp,
 		"Crescimento": cr,
 		"Prev_esg_m": pre_pm,
 		"Prev_esg": pre
@@ -58,7 +58,7 @@ def build_reg(filepath):
 
 
 def create(file):
-	files = read_json("/home/otsuka/Documents/Projects/doing/agile/voz_fixa/files/config.json")
+	files = read_json("/home/otsuka/doing/voz_fixa/files/config.json")
 	reg_dict = open_file(files["regional_filepath"], build_reg)
 	csv_reader = csv.reader(file, delimiter=';')
 	line_count = 0
@@ -103,7 +103,12 @@ def create(file):
 				ports[row[0]]	= status				
 			else:
 				ports[row[0]][row[1]] += 1
-			if (row[1] == "INTERCEPTADO" or row[1] == "OCUPADO" or row[1] == "OCUPADO FIXA DADOS" or row[1] == "OCUPADO RUBI"):
+			if (
+				row[1] == "INTERCEPTADO" or 
+				row[1] == "OCUPADO" or 
+				row[1] == "OCUPADO FIXA DADOS" or 
+				row[1] == "OCUPADO RUBI"
+			):
 				ports[row[0]]["T OCUPADO"] += 1
 			if row[1] == "VAGO":
 				ports[row[0]]["T DISPONIVEL"] += 1
@@ -132,6 +137,14 @@ def date_dif(file):
 	return r
 
 
+def db_inserction(filepath, db_name, tb_name, db_info, docs):
+	credentials = read_json(filepath)
+	db_i = read_json(db_info)
+	db = mySQL(credentials, db_name)
+	db.create_table(tb_name, db_i)
+	db.insert_into(tb_name, db_i, docs)
+
+
 def open_file(file_path, fun_kappa):
 	with open(file_path, "r", encoding='ISO-8859-1') as file:
 		return fun_kappa(file)
@@ -143,20 +156,26 @@ def read_json(filepath):
 
 
 def main():
-	try:
-		base_dict = {}
-		actual_dict = {}
-		reg_dict = {}
-		result = {}
-		files = read_json("/home/otsuka/Documents/Projects/doing/agile/voz_fixa/files/config.json")
-		base_dict = open_file(files["base_filepath"], create)
-		actual_dict = open_file(files["actual_filepath"], create)
-		days = open_file(files["dates_filepath"], date_dif)
-		for key in actual_dict:
-			result[key] = build_dict(key, base_dict, actual_dict, days)
-		print(result)
-	except Exception as e:
-		print(e)
+	base_dict = {}
+	actual_dict = {}
+	reg_dict = {}
+	result = {}
+	files = read_json("/home/otsuka/doing/voz_fixa/files/config.json")
+	base_dict = open_file(files["base_filepath"], create)
+	actual_dict = open_file(files["actual_filepath"], create)
+	days = open_file(files["dates_filepath"], date_dif)
+	for key in actual_dict:
+		result[key] = build_dict(key, base_dict, actual_dict, days)
+	items = []
+	for i in result.keys():
+		items.append(result[i])
+	db_inserction(
+		files["database_credentials"], 
+		files["database_name"], 
+		files["table_name"], 
+		files["table_info"],
+		items
+	)
 
 
 main()

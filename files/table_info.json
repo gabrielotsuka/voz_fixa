@@ -1,0 +1,13 @@
+{
+	"id": "INT AUTO_INCREMENT",
+	"Estação": "TINYTEXT",
+	"Regional": "TINYTEXT",
+	"Localidade": "TINYTEXT",
+	"Sigla": "TINYTEXT",
+	"Total": "INT",
+	"Ocupados": "INT",
+	"Disponíveis": "INT",
+	"Crescimento": "DOUBLE",
+	"Prev_esg_m": "DOUBLE",
+	"Prev_esg": "TINYTEXT"
+}

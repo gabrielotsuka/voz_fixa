@@ -1,0 +1,12 @@
+{
+	"id": "INT AUTO_INCREMENT",
+	"Estado": "TINYTEXT",
+	"Cidade": "TINYTEXT",
+	"Anel": "TINYTEXT",
+	"Speed": "DOUBLE",
+	"Informacao": "TINYTEXT",
+	"Traffic_100%": "INT",
+	"Traffic_95%": "INT",
+	"Traffic_Gbps": "DOUBLE",
+	"TX": "INT"
+}

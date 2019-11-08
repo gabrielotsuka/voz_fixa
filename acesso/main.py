@@ -1,11 +1,11 @@
-import csv 
-from datetime import date
-import math
+import csv
 import json
+import math
 import sys
-sys.path.append("/home/otsuka/doing/voz_fixa/sql_library")
+sys.path.append("/home/usrCapacity/broadband_internet_analysis/voz_fixa/acesso/sql_library")
+from datetime import date
 from sql_json import mySQL
-
+	
 
 def build_dict(station, base, actual, days):
 	total = actual[station]["TOTAL"]
@@ -58,7 +58,7 @@ def build_reg(filepath):
 
 
 def create(file):
-	files = read_json("/home/otsuka/doing/voz_fixa/files/config.json")
+	files = read_json("/home/usrCapacity/broadband_internet_analysis/voz_fixa/acesso/files/config.json")
 	reg_dict = open_file(files["regional_filepath"], build_reg)
 	csv_reader = csv.reader(file, delimiter=';')
 	line_count = 0
@@ -100,13 +100,13 @@ def create(file):
 					"T DISPONIVEL": 0
 				}
 				status[row[1]] += 1
-				ports[row[0]]	= status				
+				ports[row[0]]	= status
 			else:
 				ports[row[0]][row[1]] += 1
 			if (
-				row[1] == "INTERCEPTADO" or 
-				row[1] == "OCUPADO" or 
-				row[1] == "OCUPADO FIXA DADOS" or 
+				row[1] == "INTERCEPTADO" or
+				row[1] == "OCUPADO" or
+				row[1] == "OCUPADO FIXA DADOS" or
 				row[1] == "OCUPADO RUBI"
 			):
 				ports[row[0]]["T OCUPADO"] += 1
@@ -117,7 +117,7 @@ def create(file):
 	return ports
 
 
-def date_dif(file):
+def date_dif_file(file):
 	dates = []
 	date_format = "%d/%m/%Y"
 	for d in file.readlines():
@@ -137,7 +137,20 @@ def date_dif(file):
 	return r
 
 
-def db_inserction(filepath, db_name, tb_name, db_info, docs):
+
+def date_dif_arg(d1,d2):
+	dates = []
+	datez = []
+	for i in d1.split("/"):
+		dates.append(int(i))
+	for i in d2.split("/"):
+		datez.append(int(i))
+	d1 = date(dates[2],dates[1],dates[0])
+	d2 = date(datez[2],datez[1],datez[0])
+	return abs(d2-d1).days
+
+
+def db_insertion(filepath, db_name, tb_name, db_info, docs):
 	credentials = read_json(filepath)
 	db_i = read_json(db_info)
 	db = mySQL(credentials, db_name)
@@ -155,27 +168,31 @@ def read_json(filepath):
 		return json.load(file, encoding = 'utf-8')
 
 
-def main():
+def main(d1 = None, d2 = None):
 	base_dict = {}
 	actual_dict = {}
 	reg_dict = {}
-	result = {}
-	files = read_json("/home/otsuka/doing/voz_fixa/files/config.json")
+	result = {} 
+	files = read_json("/home/usrCapacity/broadband_internet_analysis/voz_fixa/acesso/files/config.json")
 	base_dict = open_file(files["base_filepath"], create)
 	actual_dict = open_file(files["actual_filepath"], create)
-	days = open_file(files["dates_filepath"], date_dif)
+	if d1 == None or d2 == None:
+		days = open_file(files["dates_filepath"], date_dif_file)
+	else:
+		days = date_dif_arg(d1, d2)
 	for key in actual_dict:
 		result[key] = build_dict(key, base_dict, actual_dict, days)
 	items = []
 	for i in result.keys():
 		items.append(result[i])
-	db_inserction(
-		files["database_credentials"], 
-		files["database_name"], 
-		files["table_name"], 
+	db_insertion(
+		files["database_credentials"],
+		files["database_name"],
+		files["table_name"],
 		files["table_info"],
 		items
 	)
 
 
-main()
+if __name__ == "__main__":
+	main()
